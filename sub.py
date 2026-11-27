@@ -9,7 +9,7 @@ UUID = os.environ["UUID"]
 HOST_DOMAIN = os.environ["HOST_DOMAIN"]
 NODE_NAME = os.environ.get("NODE_NAME", "Pickle Hostly Germany Nuremberg")
 GROUP_NAME = os.environ.get("GROUP_NAME", "Pickle Self-built Nodes")
-TOTAL_BYTES = int(os.environ.get("TOTAL_BYTES", "53687091200"))
+TOTAL_BYTES = int(os.environ.get("TOTAL_BYTES", "1099511627776"))
 
 
 def read_net_bytes():
@@ -23,12 +23,14 @@ def read_net_bytes():
         return 0, 0
 
 
-def next_month_ts():
+def next_reset_ts(reset_day=27):
     now = datetime.now(timezone.utc)
-    if now.month == 12:
-        nxt = datetime(now.year + 1, 1, 1, tzinfo=timezone.utc)
+    if now.day < reset_day:
+        nxt = datetime(now.year, now.month, reset_day, tzinfo=timezone.utc)
+    elif now.month == 12:
+        nxt = datetime(now.year + 1, 1, reset_day, tzinfo=timezone.utc)
     else:
-        nxt = datetime(now.year, now.month + 1, 1, tzinfo=timezone.utc)
+        nxt = datetime(now.year, now.month + 1, reset_day, tzinfo=timezone.utc)
     return int(nxt.timestamp())
 
 
@@ -43,7 +45,7 @@ class SubHandler(BaseHTTPRequestHandler):
             return
 
         rx, tx = read_net_bytes()
-        expire_ts = next_month_ts()
+        expire_ts = next_reset_ts(27)
         vless = (
             f"vless://{UUID}@{HOST_DOMAIN}:443"
             f"?encryption=none&security=tls&sni={HOST_DOMAIN}"
